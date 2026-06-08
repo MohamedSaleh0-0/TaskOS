@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasks-OS | Professional Focus Feed</title>
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --border-color: #334155;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --priority-hi: #ef4444;
+            --priority-med: #f59e0b;
+            --font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: var(--font-stack);
+            font-size: 14px;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .dashboard-layout { display: flex; justify-content: center; height: 100%; overflow-y: auto; padding: 30px 0; }
+        .main-stream { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 20px; padding: 0 20px; }
+
+        .tui-scroll-spy-nav {
+            position: sticky;
+            top: 0;
+            background-color: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 10;
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-tab-btn {
+            background-color: #334155;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 12px;
+            border-radius: 20px;
+            transition: all 0.15s;
+        }
+        .nav-tab-btn:hover { color: var(--text-main); background-color: var(--border-color); }
+
+        .tui-feed-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+        }
+
+        .card-title-header {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 6px;
+        }
+
+        .inline-capture-box { display: flex; gap: 10px; margin-top: 5px; }
+        .tui-inline-input {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 12px;
+            font-size: 13px;
+            border-radius: 6px;
+        }
+        .tui-inline-input:focus { outline: none; border-color: var(--accent-blue); }
+
+        .tui-inline-btn {
+            background-color: var(--accent-blue);
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        .tui-inline-btn:hover { background-color: #2563eb; }
+
+        .item-row-node { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #334155; }
+        .item-row-node:last-child { border-bottom: none; }
+        .node-title-group { flex: 1; }
+
+        .tui-checkbox-mock {
+            appearance: none; -webkit-appearance: none;
+            width: 16px; height: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 4px; margin-right: 12px; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .tui-checkbox-mock:checked { background-color: var(--accent-green); border-color: var(--accent-green); }
+        .tui-checkbox-mock:checked::after { content: '✓'; color: #fff; font-size: 11px; font-weight: bold; }
+
+        .item-row-node.done .node-title-group { color: var(--text-muted); text-decoration: line-through; }
+
+        .priority-lbl { font-size: 10px; text-transform: uppercase; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+        .priority-lbl.high { background-color: rgba(239, 68, 68, 0.15); color: var(--priority-hi); }
+        .priority-lbl.med { background-color: rgba(245, 158, 11, 0.15); color: var(--priority-med); }
+
+        .date-badge { font-size: 11px; color: var(--text-muted); background-color: #334155; padding: 2px 6px; border-radius: 4px; margin-left: 8px; }
+
+        .inc-dec-actions { display: flex; align-items: center; gap: 6px; }
+        .math-btn {
+            background-color: #334155; border: 1px solid var(--border-color); color: var(--text-main);
+            width: 26px; height: 26px; cursor: pointer; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .toggle-habit-btn {
+            background-color: #334155; border: 1px solid var(--border-color); color: var(--text-muted);
+            padding: 4px 12px; cursor: pointer; font-size: 11px; border-radius: 4px;
+        }
+        .toggle-habit-btn.active-done { background-color: rgba(16, 185, 129, 0.15); color: var(--accent-green); border-color: var(--accent-green); }
+
+        .action-icon-btn {
+            background: none; border: none; color: var(--text-muted); margin-left: 10px; cursor: pointer; font-size: 12px;
+        }
+        .action-icon-btn:hover { color: var(--accent-blue); }
+
+        /* Modal Overlay & Sheet Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(15, 23, 42, 0.8);
+            display: flex; justify-content: center; align-items: center; z-index: 100;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: auto; }
+        .modal-card {
+            background-color: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 24px; width: 100%; max-width: 450px;
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        .modal-field { display: flex; flex-direction: column; gap: 5px; }
+        .modal-field label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="app-root" class="dashboard-layout">
+    <main class="main-stream">
+
+        <nav class="tui-scroll-spy-nav">
+            <button class="nav-tab-btn" onclick="jumpTo('journal-card')">Journal</button>
+            <button class="nav-tab-btn" onclick="jumpTo('habits-card')">Habits</button>
+            <button class="nav-tab-btn" onclick="jumpTo('tasks-card')">Today Focus</button>
+            <button class="nav-tab-btn" onclick="jumpTo('metrics-card')">Metrics</button>
+        </nav>
+
+        <section id="journal-card" class="tui-feed-card">
+            <div class="card-title-header">Journal Capturer Node</div>
+            <div class="inline-capture-box">
+                <input type="text" id="journal-input" class="tui-inline-input" style="flex: 1;" placeholder="اكتب خاطرة سريعة، استخدم الـ tags للتوجيه تلقائياً...">
+                <button id="save-journal-btn" class="tui-inline-btn">Log Line</button>
+            </div>
+            <div id="journal-log-notice" style="font-size:12px; color: var(--accent-blue); margin-top: 6px; display:none;"></div>
+        </section>
+
+        <section id="habits-card" class="tui-feed-card">
+            <div class="card-title-header">Daily Tracking</div>
+            <div id="habits-list-container">
+                </div>
+        </section>
+
+        <section id="tasks-card" class="tui-feed-card">
+            <div class="card-title-header">Today focus stream</div>
+            <div class="inline-capture-box" style="margin-bottom: 15px;">
+                <input type="text" id="task-title-input" class="tui-inline-input" style="flex:3;" placeholder="مهمة جديدة لليوم...">
+                <input type="text" id="task-time-input" class="tui-inline-input" style="flex:1; max-width:90px;" placeholder="14:00">
+                <button id="save-task-btn" class="tui-inline-btn">Add Focus</button>
+            </div>
+            <div id="tasks-list-container">
+                </div>
+        </section>
+
+        <section id="metrics-card" class="tui-feed-card">
+            <div class="card-title-header">Performance Index</div>
+            <div id="metrics-text-pane" style="font-size: 13px; color: var(--text-muted); line-height: 1.6;"></div>
+        </section>
+
+    </main>
+</div>
+
+<div id="edit-modal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 style="font-size: 15px; text-transform: uppercase; color: var(--text-main);">Configure Task Properties</h3>
+        <input type="hidden" id="edit-task-id">
+        
+        <div class="modal-field">
+            <label>Task Title</label>
+            <input type="text" id="edit-task-title" class="tui-inline-input">
+        </div>
+        <div class="modal-field">
+            <label>Internal Execution Date (due date)</label>
+            <input type="time" id="edit-task-duedate" class="tui-inline-input">
+        </div>
+        <div class="modal-field">
+            <label>Hard External Deadline</label>
+            <input type="date" id="edit-task-deadline" class="tui-inline-input">
+        </div>
+        <div class="modal-field">
+            <label>Priority</label>
+            <select id="edit-task-priority" class="tui-inline-input" style="background-color: var(--bg-main);">
+                <option value="none">None</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="tui-inline-btn" style="background-color: #334155;" onclick="closeModal()">Cancel</button>
+            <button class="tui-inline-btn" onclick="saveModalChanges()">Save Config</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const state = {
+        tasks: [
+            { id: 't1', title: 'Build fundamental AiGenda API Endpoints', status: 'in-progress', priority: 'high', dueDate: '11:00', deadline: '2026-06-15' },
+            { id: 't2', title: 'Validate NLP tokenizer text rules', status: 'todo', priority: 'medium', dueDate: '16:30', deadline: '2026-06-12' },
+            { id: 't3', title: 'Process project repo backup chains', status: 'done', priority: 'low', dueDate: '08:00', deadline: '' }
+        ],
+        habits: [
+            { id: 'h1', title: 'تمرين البطن والكاليسثينيكس (مجموعات)', type: 'qualitative', currentValue: 4 },
+            { id: 'h2', title: 'Core Architectural LeetCode Session', type: 'binary', currentValue: true },
+            { id: 'h3', title: 'Log Financial Ledger Transactions', type: 'binary', currentValue: false }
+        ]
+    };
+
+    function jumpTo(id) { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+
+    document.getElementById('save-journal-btn').addEventListener('click', () => {
+        const input = document.getElementById('journal-input');
+        if (!input.value.trim()) return;
+        const notice = document.getElementById('journal-log-notice');
+        notice.innerText = `-> Linked directly under: ${input.value.includes('#مشاكل') ? '### مشاكل' : '### خواطر'}`;
+        notice.style.display = 'block'; input.value = '';
+        setTimeout(() => notice.style.display = 'none', 3000);
+    });
+
+    document.getElementById('save-task-btn').addEventListener('click', () => {
+        const title = document.getElementById('task-title-input').value.trim();
+        const time = document.getElementById('task-time-input').value.trim();
+        if (!title) return;
+        state.tasks.push({ id: `t_${Date.now()}`, title: title, status: 'todo', priority: 'none', dueDate: time || null, deadline: null });
+        document.getElementById('task-title-input').value = '';
+        document.getElementById('task-time-input').value = '';
+        renderEngine();
+    });
+
+    function renderHabitsSubsystem() {
+        const container = document.getElementById('habits-list-container'); container.innerHTML = '';
+        state.habits.forEach(h => {
+            const node = document.createElement('div'); node.className = 'item-row-node';
+            if (h.type === 'binary') {
+                node.innerHTML = `
+                    <span class="node-title-group" style="${h.currentValue ? 'color:var(--text-muted);text-decoration:line-through;' : ''}">${h.title}</span>
+                    <button class="toggle-habit-btn ${h.currentValue ? 'active-done' : ''}" onclick="toggleHabit('${h.id}')">${h.currentValue ? 'Done' : 'Todo'}</button>
+                `;
+            } else {
+                node.innerHTML = `
+                    <span class="node-title-group">${h.title}</span>
+                    <div class="inc-dec-actions">
+                        <button class="math-btn" onclick="updateHabitCount('${h.id}', -1)">-</button>
+                        <input type="number" class="tui-inline-input" style="width:55px; padding:4px; text-align:center;" value="${h.currentValue}" onchange="manualHabitCount('${h.id}', this.value)">
+                        <button class="math-btn" onclick="updateHabitCount('${h.id}', 1)">+</button>
+                    </div>
+                `;
+            }
+            container.appendChild(node);
+        });
+    }
+
+    function toggleHabit(id) { const h = state.habits.find(x => x.id === id); if(h) h.currentValue = !h.currentValue; renderEngine(); }
+    function updateHabitCount(id, amt) { const h = state.habits.find(x => x.id === id); if(h && h.currentValue+amt >= 0) h.currentValue += amt; renderEngine(); }
+    function manualHabitCount(id, val) { const h = state.habits.find(x => x.id === id); if(h && parseInt(val) >= 0) h.currentValue = parseInt(val); renderEngine(); }
+
+    function renderTasksSubsystem() {
+        const container = document.getElementById('tasks-list-container'); container.innerHTML = '';
+        const sorted = [...state.tasks].sort((a,b) => {
+            if(!a.dueDate) return 1; if(!b.dueDate) return -1;
+            return a.dueDate.localeCompare(b.dueDate);
+        });
+        sorted.forEach(t => {
+            const node = document.createElement('div'); node.className = `item-row-node ${t.status === 'done' ? 'done' : ''}`;
+            let dl = t.deadline ? `<span class="priority-lbl" style="background-color:rgba(239,68,68,0.1); color:var(--priority-hi);">Cutoff: ${t.deadline}</span>` : '';
+            node.innerHTML = `
+                <input type="checkbox" class="tui-checkbox-mock" ${t.status === 'done' ? 'checked' : ''} onclick="toggleTask('${t.id}')">
+                <div class="node-title-group">
+                    <span>${t.status === 'in-progress' ? '[PROG] ' : ''}${t.title}</span>
+                    ${t.priority !== 'none' ? `<span class="priority-lbl ${t.priority}">${t.priority}</span>` : ''} ${dl}
+                </div>
+                ${t.dueDate ? `<span class="date-badge">${t.dueDate}</span>` : ''}
+                <button class="action-icon-btn" onclick="openEditModal('${t.id}')">Edit</button>
+            `;
+            container.appendChild(node);
+        });
+    }
+
+    function toggleTask(id) { const t = state.tasks.find(x => x.id === id); if(t) t.status = t.status === 'done' ? 'todo' : 'done'; renderEngine(); }
+
+    function openEditModal(id) {
+        const t = state.tasks.find(x => x.id === id); if(!t) return;
+        document.getElementById('edit-task-id').value = t.id;
+        document.getElementById('edit-task-title').value = t.title;
+        document.getElementById('edit-task-duedate').value = t.dueDate || '';
+        document.getElementById('edit-task-deadline').value = t.deadline || '';
+        document.getElementById('edit-task-priority').value = t.priority;
+        document.getElementById('edit-modal').classList.add('open');
+    }
+    function closeModal() { document.getElementById('edit-modal').classList.remove('open'); }
+    function saveModalChanges() {
+        const id = document.getElementById('edit-task-id').value;
+        const t = state.tasks.find(x => x.id === id);
+        if(t) {
+            t.title = document.getElementById('edit-task-title').value.trim();
+            t.dueDate = document.getElementById('edit-task-duedate').value || null;
+            t.deadline = document.getElementById('edit-task-deadline').value || null;
+            t.priority = document.getElementById('edit-task-priority').value;
+        }
+        closeModal(); renderEngine();
+    }
+
+    function renderEngine() {
+        renderHabitsSubsystem(); renderTasksSubsystem();
+        const done = state.tasks.filter(t => t.status === 'done').length;
+        document.getElementById('metrics-text-pane').innerHTML = `• System Sync Status: Active<br>• Solved Allocations: ${done} of ${state.tasks.length} tasks cleared.`;
+    }
+    renderEngine();
+</script>
+</body>
+</html>

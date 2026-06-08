@@ -1,18 +1,15 @@
 {
   "name": "tasks-os",
   "version": "1.0.0",
-  "description": "Task management system for Obsidian",
-  "main": "main.js",
+  "description": "Tasks-OS Plugin for Obsidian",
+  "main": "dist/main.js",
   "scripts": {
-    "dev": "obsidian-builtin-cli",
-    "build": "tsc"
+    "build": "esbuild src/main.ts --bundle --external:obsidian --outfile=dist/main.js --platform=node --target=es2022"
   },
-  "keywords": [],
-  "author": "Mohamed Saleh",
-  "license": "ISC",
+  "dependencies": {},
   "devDependencies": {
-    "@types/node": "^20.11.0",
+    "esbuild": "^0.21.0",
     "obsidian": "^1.5.7",
-    "typescript": "^5.3.3"
+    "typescript": "^5.0.0"
   }
 }

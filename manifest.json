@@ -1,0 +1,9 @@
+{
+  "id": "tasks-os-plugin",
+  "name": "Tasks-OS",
+  "version": "1.0.0",
+  "minAppVersion": "1.4.0",
+  "description": "Minimalist single-column focus feed with context-aware ingestion and qualitative habits logging.",
+  "author": "Mohamed Saleh",
+  "isDesktopOnly": true
+}

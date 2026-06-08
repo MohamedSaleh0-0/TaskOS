@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasks-OS | Inline Focus Feed (Graphite Minimalist)</title>
+    <style>
+        /* CSS 0: Graphite Minimalist Theme Palette (Elevated Mood) */
+        :root {
+            --bg-color: #1c2128;      /* الرمادي الفخم المائل للأزرق - لمنع الكآبة */
+            --card-color: #22272e;    /* لون الكروت ليعطي عمقاً وتدرجاً بصفحة التغذية */
+            --text-color: #adbac7;    /* لون النص المريح للعين */
+            --border-color: #444c56;  /* حواف محددة بوضوح ونعومة */
+            --hi-priority: #e5534b;
+            --med-priority: #db9d25;
+            --low-priority: #539bf5;
+            --accent-color: #57ab5a;  /* الأخضر الحيوي الهادئ */
+            --font-stack: 'Courier New', Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-stack);
+            font-size: 14px;
+            line-height: 1.5;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* CSS 1: Main Container Grid */
+        .dashboard-layout {
+            display: flex;
+            justify-content: center;
+            height: 100%;
+            overflow-y: auto;
+            padding: 30px 0;
+        }
+
+        .main-stream {
+            width: 100%;
+            max-width: 750px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            padding: 0 15px;
+        }
+
+        .section-card {
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            background-color: var(--card-color);
+            border-radius: 4px; /* زوايا ناعمة جداً تكسر جمود الترمينال */
+        }
+
+        .section-header {
+            text-transform: uppercase;
+            color: #768390;
+            padding: 0 0 12px;
+            font-weight: normal;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-bottom: 1px dashed var(--border-color);
+            margin-bottom: 15px;
+        }
+
+        /* CSS 2: In-line Inline Textboxes & Forms (No Friction Input) */
+        .inline-input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .tui-input {
+            flex: 1;
+            background-color: #1c2128;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px 12px;
+            font-family: var(--font-stack);
+            font-size: 13px;
+            border-radius: 3px;
+        }
+        .tui-input:focus {
+            outline: none;
+            border-color: var(--low-priority);
+        }
+
+        .tui-btn {
+            background-color: #2d333b;
+            border: 1px solid var(--border-color);
+            color: var(--accent-color);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: var(--font-stack);
+            font-size: 13px;
+            border-radius: 3px;
+        }
+        .tui-btn:hover {
+            background-color: #373e47;
+            color: #fff;
+        }
+
+        /* CSS 3: Qualitative Habits Elements */
+        .tui-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #2d333b;
+        }
+        .item-title { flex: 1; }
+
+        .scale-selector {
+            display: flex;
+            gap: 4px;
+        }
+        .scale-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: #768390;
+            padding: 3px 7px;
+            font-size: 11px;
+            cursor: pointer;
+            font-family: var(--font-stack);
+            border-radius: 2px;
+        }
+        .scale-btn:hover { background-color: #2d333b; color: var(--text-color); }
+        .scale-btn.active {
+            background-color: var(--low-priority);
+            color: #1c2128;
+            border-color: var(--low-priority);
+        }
+
+        /* CSS 4: Standard Checklist elements */
+        .tui-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            margin-right: 12px;
+            cursor: pointer;
+        }
+        .tui-checkbox::before { content: '- [ ]'; color: #546272; }
+        .tui-checkbox:checked::before { content: '- [x]'; color: var(--accent-color); }
+
+        .priority { font-size: 10px; text-transform: uppercase; padding: 1px 4px; border-radius: 2px; margin-left: 5px; }
+        .priority.hi { background-color: rgba(229,83,75,0.15); color: var(--hi-priority); }
+        .priority.med { background-color: rgba(219,157,37,0.15); color: var(--med-priority); }
+
+        .today-item.done { color: #546272; text-decoration: line-through; }
+
+    </style>
+</head>
+<body>
+
+<div id="app-root" class="dashboard-layout">
+    <main class="main-stream">
+
+        <header class="section-card" style="text-align:center; border-left: 4px solid var(--accent-color);">
+            TASKS-OS // ENGINE ONLINE // GRAPHITE VIEW<br>
+            <span style="font-size: 12px; color: #768390;">June 2026 // Today Focus Mode Activated</span>
+        </header>
+
+        <section id="journal-section" class="section-card">
+            <h2 class="section-header">Journal Capturer -> Subheading [خواطر]</h2>
+            <p style="font-size: 11px; color: #768390; margin-bottom: 8px;">Appends directly to current daily note without switching view</p>
+            <div class="inline-input-group">
+                <input type="text" id="journal-input" class="tui-input" placeholder="اكتب خاطرة أو فكرة سريعة هنا لتسجيلها فوراً...">
+                <button id="save-journal-btn" class="tui-btn">[ Log to Journal ]</button>
+            </div>
+            <div id="journal-notice" style="font-size:11px; color: var(--accent-color); margin-top: 5px; display:none;"></div>
+        </section>
+
+        <section id="habits-section" class="section-card">
+            <h2 class="section-header">Qualitative & Quantitative Habits</h2>
+            <div id="habits-container">
+                <div class="tui-item">
+                    <span class="item-title">Focus & Mental Clarity (Scale 1-5)</span>
+                    <div class="scale-selector">
+                        <button class="scale-btn" onclick="selectScale(this)">1</button>
+                        <button class="scale-btn" onclick="selectScale(this)">2</button>
+                        <button class="scale-btn" onclick="selectScale(this)">3</button>
+                        <button class="scale-btn active" onclick="selectScale(this)">4</button>
+                        <button class="scale-btn" onclick="selectScale(this)">5</button>
+                    </div>
+                </div>
+                <div class="tui-item">
+                    <span class="item-title">Calisthenics / Weighted Vest (Sets completed)</span>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="number" class="tui-input" value="4" style="width:50px; padding:3px; text-align:center;">
+                        <span style="font-size:11px; color:#768390;">sets</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tasks-section" class="section-card">
+            <h2 class="section-header">Today's Tasks Stream</h2>
+            
+            <div class="inline-input-group" style="margin-bottom: 15px;">
+                <input type="text" id="task-input" class="tui-input" placeholder="إضافة مهمة جديدة لليوم مباشرة واضغط Enter...">
+                <button id="save-task-btn" class="tui-btn">[ Add Task ]</button>
+            </div>
+
+            <div id="tasks-container">
+                <div class="tui-item today-item">
+                    <input type="checkbox" class="tui-checkbox">
+                    <div class="item-title">Build AiGenda API structure <span class="priority hi">high</span></div>
+                    <span style="font-size:11px; color:#768390;">Due: 14:00</span>
+                </div>
+                <div class="tui-item today-item">
+                    <input type="checkbox" class="tui-checkbox">
+                    <div class="item-title">Validate NLP cleaning function <span class="priority med">medium</span></div>
+                    <span style="font-size:11px; color:#768390;">Due: 18:00</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-card">
+            <h2 class="section-header">Performance Analytics</h2>
+            Completion Metrics: 2 tasks remaining // 2 habits updated<br>
+            Streak Monitor: Stable
+        </section>
+
+    </main>
+</div>
+
+<script>
+    // Pure UI behaviors simulation
+    function selectScale(btn) {
+        const siblings = btn.parentNode.querySelectorAll('.scale-btn');
+        siblings.forEach(s => s.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    document.getElementById('save-journal-btn').addEventListener('click', () => {
+        const input = document.getElementById('journal-input');
+        if(input.value.trim()) {
+            const notice = document.getElementById('journal-notice');
+            notice.innerText = `-> Attached as bullet under ## June 2026 > ### خواطر`;
+            notice.style.display = 'block';
+            input.value = '';
+            setTimeout(() => { notice.style.display = 'none'; }, 3000);
+        }
+    });
+</script>
+</body>
+</html>

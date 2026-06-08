@@ -1,79 +1,67 @@
-import { Plugin, Notice } from 'obsidian';
+import { Plugin } from 'obsidian';
 import { StateManager } from './data/StateManager';
 import { RenameListener } from './events/RenameListener';
-import { LineParser } from './utils/LineParser';
-import { QuickTaskModal } from './modals/QuickTaskModal';
+import { TasksOSSettings } from './domain/types';
+import { TasksOSSettingTab } from './settings/TasksOSSettingTab';
+import { DashboardView, VIEW_TYPE_TASKS_OS } from './views/DashboardView';
+
+const DEFAULT_SETTINGS: TasksOSSettings = {
+    dailyNotesFolder: '',
+    journalHeadingSize: '###',
+    defaultJournalHeading: 'خواطر',
+    tagRoutes: {}
+};
 
 export default class TasksOSPlugin extends Plugin {
-    private stateManager!: StateManager;
+    public stateManager!: StateManager;
+    public pluginSettings!: TasksOSSettings;
 
     async onload() {
-        console.log('Loading Tasks-OS Plugin...');
+        console.log('Loading Tasks-OS Engine with Configuration Tab...');
 
-        // 1. تهيئة وإقلاع محرك البيانات والكاش
+        await this.loadSettings();
+
         this.stateManager = new StateManager(this);
         await this.stateManager.loadState();
 
-        // 2. تشغيل وتفعيل مستمع أحداث الـ Rename للحماية من الروابط المكسورة
         const renameListener = new RenameListener(this, this.stateManager);
         renameListener.register();
 
-        // 3. تسجيل أمر الالتقاط الذكي (The Dynamic Hotkey Ingestion Command)
+        this.registerView(
+            VIEW_TYPE_TASKS_OS,
+            (leaf) => new DashboardView(leaf, this.stateManager, this)
+        );
+
+        this.addSettingTab(new TasksOSSettingTab(this.app, this));
+
         this.addCommand({
-            id: 'capture-task-contextually',
-            name: 'التقاط المهمة الحالية ذكياً أو فتح نافذة التخصيص',
-            editorCallback: async (editor, view) => {
-                const activeFile = view.file;
-                if (!activeFile) return;
-
-                // قراءة السطر الحالي الذي يقف عليه مؤشر الكتابة بالكامل
-                const currentLineText = editor.getLine(editor.getCursor().line);
-                
-                // تحليل السطر عبر المفسر
-                const parsedResult = LineParser.parseLine(currentLineText);
-                
-                // جلب أقرب عنوان رئيسي يقع فوق المؤشر
-                const nearestHeading = LineParser.findNearestHeading(this.app, activeFile, editor);
-
-                if (parsedResult.isTask) {
-                    // السيناريو الأول: السطر عبارة عن تشيك بوكس ماركداون -> حفظ صامت فوري بالـ Defaults
-                    const addedTask = await this.stateManager.addTask({
-                        title: parsedResult.title,
-                        description: '',
-                        status: 'todo',
-                        priority: 'none',
-                        dueDate: null,
-                        timeEstimate: null,
-                        tags: [],
-                        dependencies: [],
-                        contextFile: activeFile.path,
-                        contextHeading: nearestHeading
-                    });
-
-                    if (addedTask) {
-                        new Notice(`تم تأمين المهمة صامتاً: "${parsedResult.title}"`);
-                    } else {
-                        new Notice('عذراً هندسة، توجد مهمة قائمة بنفس الاسم بالفعل!');
-                    }
-                } else {
-                    // السيناريو الثاني: السطر فارغ أو نص عادي -> فتح نافذة التخصيص الفوري والكامل
-                    new QuickTaskModal(this.app, this.stateManager, parsedResult.title, async (modalResult) => {
-                        const addedTask = await this.stateManager.addTask({
-                            ...modalResult,
-                            status: 'todo',
-                            contextFile: activeFile.path,
-                            contextHeading: nearestHeading
-                        });
-
-                        if (addedTask) {
-                            new Notice(`تم حفظ المهمة المخصصة: "${modalResult.title}"`);
-                        } else {
-                            new Notice('عذراً هندسة، توجد مهمة قائمة بنفس الاسم بالفعل!');
-                        }
-                    }).open();
-                }
-            }
+            id: 'open-tasks-os-dashboard',
+            name: 'فتح لوحة التحكم المركزية الموحدة',
+            callback: () => this.activateView()
         });
+    }
+
+    async loadSettings() {
+        this.pluginSettings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    }
+
+    async saveSettings() {
+        await this.saveData(this.pluginSettings);
+    }
+
+    async activateView() {
+        const { workspace } = this.app;
+        let leaf = workspace.getLeavesOfType(VIEW_TYPE_TASKS_OS)[0];
+
+        if (!leaf) {
+            const newLeaf = workspace.getLeaf(false);
+            if (newLeaf) {
+                leaf = newLeaf;
+                await leaf.setViewState({ type: VIEW_TYPE_TASKS_OS, active: true });
+            }
+        }
+
+        if (leaf) workspace.revealLeaf(leaf);
     }
 
     onunload() {
